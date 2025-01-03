@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Tower Tracker with Statistics</title>
+    <title>Tower Tracker with Tabs</title>
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -14,6 +14,32 @@
         h1 {
             text-align: center;
             color: #0056b3;
+        }
+        .tabs {
+            display: flex;
+            justify-content: center;
+            margin-bottom: 20px;
+            border-bottom: 2px solid #0056b3;
+        }
+        .tab {
+            padding: 10px 20px;
+            cursor: pointer;
+            font-weight: bold;
+            color: #0056b3;
+            border: 1px solid transparent;
+            border-radius: 8px 8px 0 0;
+            background-color: #e7f3ff;
+            transition: background-color 0.3s;
+        }
+        .tab:hover, .tab.active {
+            background-color: #0056b3;
+            color: #fff;
+        }
+        .content {
+            display: none;
+        }
+        .content.active {
+            display: block;
         }
         .tower {
             border: 1px solid #0056b3;
@@ -88,7 +114,6 @@
             margin-top: 10px;
         }
         #statistics {
-            margin-top: 20px;
             padding: 15px;
             border: 1px solid #ccc;
             border-radius: 8px;
@@ -97,16 +122,26 @@
     </style>
 </head>
 <body>
-    <h1>Tower Tracker with Statistics</h1>
-    <div id="towers"></div>
-    <button onclick="addTower()">Add New Tower</button>
+    <h1>Tower Tracker</h1>
 
-    <div id="statistics">
-        <h2>Statistics</h2>
-        <p>Total Towers: <span id="totalTowers">0</span></p>
-        <p>Total Attempts: <span id="totalAttempts">0</span></p>
-        <p>Average Time in Tower: <span id="averageTime">0</span></p>
-        <p>Total Time Spent: <span id="totalTime">0</span></p>
+    <div class="tabs">
+        <div class="tab active" onclick="showTab('towersTab')">Towers</div>
+        <div class="tab" onclick="showTab('statisticsTab')">Statistics</div>
+    </div>
+
+    <div id="towersTab" class="content active">
+        <div id="towers"></div>
+        <button onclick="addTower()">Add New Tower</button>
+    </div>
+
+    <div id="statisticsTab" class="content">
+        <div id="statistics">
+            <h2>Statistics</h2>
+            <p>Total Towers: <span id="totalTowers">0</span></p>
+            <p>Total Attempts: <span id="totalAttempts">0</span></p>
+            <p>Average Time in Tower: <span id="averageTime">0</span></p>
+            <p>Total Time Spent: <span id="totalTime">0</span></p>
+        </div>
     </div>
 
     <script>
@@ -122,6 +157,8 @@
             towersContainer.innerHTML = '';
 
             towersData.forEach((tower, towerIndex) => {
+                const averageTime = tower.attempts > 0 ? (tower.timeInTower / tower.attempts).toFixed(2) : 'N/A';
+
                 const towerDiv = document.createElement('div');
                 towerDiv.className = 'tower';
                 towerDiv.dataset.index = towerIndex;
@@ -138,15 +175,18 @@
                         <label>Player Name: <input type="text" value="${tower.playerName}" onchange="updateTower(${towerIndex}, 'playerName', this.value)"></label>
                         <label>Attempts: <input type="number" value="${tower.attempts}" onchange="updateTower(${towerIndex}, 'attempts', this.value)"></label>
                         <label>Time in Tower (minutes): <input type="number" value="${tower.timeInTower}" onchange="updateTower(${towerIndex}, 'timeInTower', this.value)"></label>
+                        <p>Average Time per Attempt: <strong>${averageTime} minutes</strong></p>
                         <h3>Progress:</h3>
                         <div class="progress">
                             ${tower.progress.map((entry, progressIndex) => `
                                 <div class="progress-entry">
                                     <textarea onchange="updateProgress(${towerIndex}, ${progressIndex}, this.value)">${entry}</textarea>
+                                    <button onclick="deleteProgress(${towerIndex}, ${progressIndex})">Delete</button>
                                 </div>
                             `).join('')}
                         </div>
                         <button onclick="addProgress(${towerIndex})">Add Progress Entry</button>
+                        <button onclick="deleteTower(${towerIndex})">Delete Tower</button>
                     </div>
                 `;
 
@@ -177,6 +217,12 @@
             renderTowers();
         }
 
+        function deleteProgress(towerIndex, progressIndex) {
+            towersData[towerIndex].progress.splice(progressIndex, 1);
+            saveData();
+            renderTowers();
+        }
+
         function addTower() {
             towersData.push({
                 nameTower: '',
@@ -191,6 +237,12 @@
             renderTowers();
         }
 
+        function deleteTower(towerIndex) {
+            towersData.splice(towerIndex, 1);
+            saveData();
+            renderTowers();
+        }
+
         function updateStatistics() {
             const totalTowers = towersData.length;
             const totalAttempts = towersData.reduce((sum, tower) => sum + (parseInt(tower.attempts) || 0), 0);
@@ -201,6 +253,13 @@
             document.getElementById('totalAttempts').textContent = totalAttempts;
             document.getElementById('averageTime').textContent = averageTime;
             document.getElementById('totalTime').textContent = totalTime;
+        }
+
+        function showTab(tabId) {
+            document.querySelectorAll('.content').forEach(content => content.classList.remove('active'));
+            document.querySelector(`#${tabId}`).classList.add('active');
+            document.querySelectorAll('.tab').forEach(tab => tab.classList.remove('active'));
+            document.querySelector(`.tab[onclick="showTab('${tabId}')"]`).classList.add('active');
         }
 
         renderTowers();
