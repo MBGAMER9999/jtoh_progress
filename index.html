@@ -214,6 +214,7 @@
         function addProgress(towerIndex) {
             towersData[towerIndex].progress.push('');
             saveData();
+            sendToDiscord(towersData[towerIndex]);
             renderTowers();
         }
 
@@ -251,14 +252,41 @@
 
             document.getElementById('totalTowers').textContent = totalTowers;
             document.getElementById('totalAttempts').textContent = totalAttempts;
-            document.getElementById('averageTime').textContent = averageTime;
             document.getElementById('totalTime').textContent = totalTime;
+            document.getElementById('averageTime').textContent = averageTime;
+        }
+
+        function sendToDiscord(tower) {
+            const webhookURL = 'https://discord.com/api/webhooks/1325954161812176916/Z_odRpYgmrmkHgY6KOHdAPmf-AnTvubtYtj7DKWR3f7Km_p-kF9fLZEq4h6UdL5DtWOh'; // Replace with your Discord webhook URL
+            const baseUrl = 'https://www.towerstats.com/jtoh?username='; // Replace with your desired base URL
+            const profileLink = `${baseUrl}${encodeURIComponent(tower.playerName)}`;
+
+
+            const progressEntries = tower.progress.map((entry, index) => `${index + 1}. ${entry}`).join('\n');
+            const message = {
+                content: `**Tower Progress Update**\n------------------------------------------------\n**Tower Name:** ${tower.nameTower || 'Unnamed Tower'}\n**Player Name:** ${tower.playerName || 'Unknown'}\n**Profile Link:** ${profileLink}\n**Progress:**\n${progressEntries}`
+            };
+
+
+            fetch(webhookURL, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(message)
+            }).then(response => {
+                if (!response.ok) {
+                    console.error('Failed to send message to Discord', response);
+                }
+            }).catch(error => {
+                console.error('Error sending message to Discord:', error);
+            });
         }
 
         function showTab(tabId) {
             document.querySelectorAll('.content').forEach(content => content.classList.remove('active'));
-            document.querySelector(`#${tabId}`).classList.add('active');
             document.querySelectorAll('.tab').forEach(tab => tab.classList.remove('active'));
+            document.getElementById(tabId).classList.add('active');
             document.querySelector(`.tab[onclick="showTab('${tabId}')"]`).classList.add('active');
         }
 
